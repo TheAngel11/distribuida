@@ -21,13 +21,12 @@ TOKEN = None  # token will be: "TOKEN <int>"
 # handle client connection (previous server)
 def handle_client(client_socket):
     global LOCAL_VARIABLE, TOKEN
-    while True:
-        data = client_socket.recv(1024).decode('utf-8')
-        if data.startswith('TOKEN'):
-            _, token_value = data.split()
-            TOKEN = int(token_value)  # update token value
-            perform_operations()  # perform operations (read or write, depending on the server)
-        client_socket.close()
+    data = client_socket.recv(1024).decode('utf-8')
+    if data.startswith('TOKEN'):
+        _, token_value = data.split()
+        TOKEN = int(token_value)  # update token value
+        perform_operations()  # perform operations (read or write, depending on the server)
+    client_socket.close()
 
 
 def perform_operations():
