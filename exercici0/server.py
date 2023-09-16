@@ -2,94 +2,94 @@ import socket
 import time
 from sys import argv
 
+# constants
+HOST = "127.0.0.1"
 # simulation variables
-OPERATION_WAIT_TIME = 2
-
+OPERATION_WAIT_TIME = 1
 # server variables
-SERVER_ID = 0
-SERVER_PORT = 0
-NEXT_SERVER_PORT = 0
-PREV_SERVER_PORT = 0
-READ_OR_WRITE = 0  # 0 for a read only server , 1 for read and write server
-
-LOCAL_VARIABLE = 0
-
+ID = 0
+PORT = 0
+NEXT_PORT = 0
+PREV_PORT = 0
+READ_NOT_WRITE = 0  # 1 for a read only server , 0 for read and write server
+LOCAL_VALUE = 0 # The int variable that we will read and/or update
 # shared variable (what we will be sending around the ring)
 TOKEN = None  # token will be: "TOKEN <int>"
 
-
 # handle client connection (previous server)
-def handle_client(client_socket):
-    global LOCAL_VARIABLE, TOKEN
-    data = client_socket.recv(1024).decode('utf-8')
-    if data.startswith('TOKEN'):
-        _, token_value = data.split()
-        TOKEN = int(token_value)  # update token value
-        perform_operations()  # perform operations (read or write, depending on the server)
-    client_socket.close()
+def handle_client(connection):
+    global TOKEN
+    data = connection.recv(16).decode("utf-8")
 
+    TOKEN = int(data)  # update token value
+    make_operations()  # make operations (read or write, depending on the server)
+    connection.close()
 
-def perform_operations():
-    global READ_OR_WRITE
-    if READ_OR_WRITE == 0:
-        read_variable()
+def make_operations():
+    global READ_NOT_WRITE
+    if READ_NOT_WRITE == 1:
+        get_current_value()
     else:
-        read_variable()
-        update_variable()
-
-
-def update_variable():
-    global LOCAL_VARIABLE, TOKEN, OPERATION_WAIT_TIME
+        get_current_value()
+        update_current_value()
     time.sleep(OPERATION_WAIT_TIME)
-    LOCAL_VARIABLE += 1
-    TOKEN = LOCAL_VARIABLE
-    print(f"Server {SERVER_ID} updated the variable to {LOCAL_VARIABLE}")
 
+def update_current_value():
+    global LOCAL_VALUE, TOKEN, OPERATION_WAIT_TIME
+    LOCAL_VALUE += 1  # UPDATING THE VARIABLE
+    TOKEN = LOCAL_VALUE
+    print(f"Server {ID} has updated the variable to value {LOCAL_VALUE}")
 
-def read_variable():
-    global LOCAL_VARIABLE, TOKEN, OPERATION_WAIT_TIME
-    time.sleep(OPERATION_WAIT_TIME)
-    LOCAL_VARIABLE = TOKEN
-    print(f"Server {SERVER_ID} read the variable {LOCAL_VARIABLE}")
+def get_current_value():
+    global LOCAL_VALUE, TOKEN, OPERATION_WAIT_TIME
+    LOCAL_VALUE = TOKEN
+    print(f"Server {ID} has read the variable with value {LOCAL_VALUE}")
 
+def send_token():
+    global NEXT_PORT
+    message = f"{TOKEN}"
 
-def send_token_to_next_server():
-    global NEXT_SERVER_PORT
-    message = f"TOKEN {TOKEN}"
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect(('127.0.0.1', NEXT_SERVER_PORT))
-        s.sendall(message.encode('utf-8'))
-
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((HOST, NEXT_PORT))
+        s.sendall(message.encode("utf-8"))
+    finally:
+        s.close()
 
 def main():
-    global SERVER_ID, SERVER_PORT, TOKEN
+    global TOKEN, ID, PORT, PREV_PORT, NEXT_PORT, READ_NOT_WRITE, LOCAL_VALUE
+
+    # format that server.py expects:
+    # python3 server.py <id> <port> <prev_port> <next_port> <read_not_write>
+    ID = int(argv[1])
+    PORT = int(argv[2])
+    PREV_PORT = int(argv[3])
+    NEXT_PORT = int(argv[4])
+    READ_NOT_WRITE = int(argv[5])
 
     # create our socket (TCP). (We could also consider using UDP, check the document for the discussion)
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('127.0.0.1', SERVER_PORT))
+    server.bind((HOST, PORT))
     server.listen(1)  # 1 in theory, as we're on a ring
 
+    if READ_NOT_WRITE == 1:
+        print(f"Server {ID} is a read only server")
+    else:
+        print(f"Server {ID} is a read and write server")
+
     # if we are the first server, we initialize the token and start the ring
-    if SERVER_ID == 0:
-        TOKEN = LOCAL_VARIABLE
-        perform_operations()
-        send_token_to_next_server()
+    if ID == 0:
+        TOKEN = LOCAL_VALUE
+        make_operations()
+        send_token()
 
     # listen for the next connection from the previous server, and pass the token to the next server
-    while True:
-        client_socket, addr = server.accept()
-        handle_client(client_socket)
-        send_token_to_next_server()
+    start_time = time.time()
+    while time.time() - start_time < 100:
+        connection, _ = server.accept()
+        handle_client(connection)
+        send_token()
 
 
 if __name__ == "__main__":
-    # format that server.py expects:
-    # python3 server.py <server_id> <server_port> <server_port_previous> <server_port_next> <read_or_write>
-    SERVER_ID = int(argv[1])
-    SERVER_PORT = int(argv[2])
-    PREV_SERVER_PORT = int(argv[3])
-    NEXT_SERVER_PORT = int(argv[4])
-    READ_OR_WRITE = int(argv[5])
-
-    # start server
     main()
