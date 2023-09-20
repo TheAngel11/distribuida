@@ -26,7 +26,10 @@ def handle_client(connection):
     connection.close()
 
 def make_operations():
-    global READ_NOT_WRITE
+    global READ_NOT_WRITE, ID
+    if ID == 0:
+        print("----------------------------------")
+
     if READ_NOT_WRITE == 1:
         get_current_value()
     else:
@@ -80,12 +83,10 @@ def main():
     # if we are the first server, we initialize the token and start the ring
     if ID == 0:
         TOKEN = LOCAL_VALUE
-        make_operations()
         send_token()
 
     # listen for the next connection from the previous server, and pass the token to the next server
-    start_time = time.time()
-    while time.time() - start_time < 100:
+    for i in range(10):
         connection, _ = server.accept()
         handle_client(connection)
         send_token()
