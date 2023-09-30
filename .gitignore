@@ -3,6 +3,7 @@
 
 # User-specific stuff
 .idea
+.DS_Store
 
 # CMake
 cmake-build-*/
