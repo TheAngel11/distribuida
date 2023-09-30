@@ -16,6 +16,7 @@ LOCAL_VALUE = 0 # The int variable that we will read and/or update
 # shared variable (what we will be sending around the ring)
 TOKEN = None  # token will be: "TOKEN <int>"
 
+
 # handle client connection (previous server)
 def handle_client(connection):
     global TOKEN
@@ -25,10 +26,11 @@ def handle_client(connection):
     make_operations()  # make operations (read or write, depending on the server)
     connection.close()
 
+
 def make_operations():
     global READ_NOT_WRITE, ID
     if ID == 0:
-        print("----------------------------------")
+        print("----------------------------------------------")
 
     if READ_NOT_WRITE == 1:
         get_current_value()
@@ -37,16 +39,19 @@ def make_operations():
         update_current_value()
     time.sleep(OPERATION_WAIT_TIME)
 
+
 def update_current_value():
     global LOCAL_VALUE, TOKEN, OPERATION_WAIT_TIME
     LOCAL_VALUE += 1  # UPDATING THE VARIABLE
     TOKEN = LOCAL_VALUE
     print(f"Server {ID} has updated the variable to value {LOCAL_VALUE}")
 
+
 def get_current_value():
     global LOCAL_VALUE, TOKEN, OPERATION_WAIT_TIME
     LOCAL_VALUE = TOKEN
     print(f"Server {ID} has read the variable with value {LOCAL_VALUE}")
+
 
 def send_token():
     global NEXT_PORT
@@ -56,8 +61,12 @@ def send_token():
     try:
         s.connect((HOST, NEXT_PORT))
         s.sendall(message.encode("utf-8"))
-    finally:
         s.close()
+    except ConnectionRefusedError:
+        print("Closing connections...")
+        s.close()
+        exit(0)
+
 
 def main():
     global TOKEN, ID, PORT, PREV_PORT, NEXT_PORT, READ_NOT_WRITE, LOCAL_VALUE
@@ -94,3 +103,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
