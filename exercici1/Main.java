@@ -18,7 +18,9 @@ public class Main {
     public static void main(String[] args) {
         System.out.print(MENU_MSG);
         //int option = Integer.parseInt(new Scanner(System.in).nextLine());
-        int option = 2;
+        int option = 3;
+        int ARRAY_POSITIONS, INT_TO_SEARCH, NUM_THREADS;
+        long startTime, endTime;
 
         switch(option){
             case 1:
@@ -28,9 +30,9 @@ public class Main {
                 break;
             case 2:
                 //Exercise 4 & 5
-                final int ARRAY_POSITIONS = 140000000;
-                final int INT_TO_SEARCH = 250000;
-                final int NUM_THREADS = 4;
+                ARRAY_POSITIONS = 140000000;
+                INT_TO_SEARCH = 250000;
+                NUM_THREADS = 4;
                 List<Integer> list = new ArrayList<>();
                 for (int i = 0; i < ARRAY_POSITIONS; i++)
                     list.add(i);
@@ -40,9 +42,9 @@ public class Main {
                 int[] array = list.stream().mapToInt(Integer::intValue).toArray();
 
                 System.out.println("With Shared Memory --> ");
-                long startTime = System.currentTimeMillis();
+                startTime = System.currentTimeMillis();
                 int box = ParallelArraySearch.ParallelSearchSharedMemory(INT_TO_SEARCH, array, NUM_THREADS);
-                long endTime = System.currentTimeMillis();
+                endTime = System.currentTimeMillis();
                 System.out.println("Found the target at index " + box + " with " + (endTime-startTime) + "ms.");
 
                 System.out.println("With Shared Nothing --> ");
@@ -51,9 +53,27 @@ public class Main {
                 endTime = System.currentTimeMillis();
                 System.out.println("Found the target at index " + box + " with " + (endTime-startTime) + "ms.");
                 break;
-
             case 3:
                 // Exercise 7 & 8
+                ARRAY_POSITIONS = 14000000;
+                ArrayList<Integer> unorderedList = new ArrayList<>();
+                for (int i = 0; i < ARRAY_POSITIONS; i++)
+                    unorderedList.add(i);
+
+                Collections.shuffle(unorderedList);
+                System.out.println("Sorting array with merge sort. The array has " + ARRAY_POSITIONS + " positions\n");
+
+                System.out.println("With Shared Memory (Sequential Execution) --> ");
+                startTime = System.currentTimeMillis();
+                MultithreadedMergeSort.sequentialMergeSort(unorderedList);
+                endTime = System.currentTimeMillis();
+                System.out.println("Array Ordered with " + (endTime-startTime) + "ms.");
+
+                System.out.println("With Shared Nothing (Parallel Execution) --> ");
+                startTime = System.currentTimeMillis();
+                MultithreadedMergeSort.parallelMergeSort(unorderedList);
+                endTime = System.currentTimeMillis();
+                System.out.println("Array Ordered with " + (endTime-startTime) + "ms.");
                 break;
             default:
                 System.out.println("Select a valid option (1, 2 or 3)");
