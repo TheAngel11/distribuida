@@ -1,7 +1,6 @@
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Scanner;
 
 public class Main {
     private static final String MENU_MSG = """
@@ -55,7 +54,7 @@ public class Main {
                 break;
             case 3:
                 // Exercise 7 & 8
-                ARRAY_POSITIONS = 14000000;
+                ARRAY_POSITIONS = 14000;
                 ArrayList<Integer> unorderedList = new ArrayList<>();
                 for (int i = 0; i < ARRAY_POSITIONS; i++)
                     unorderedList.add(i);
@@ -65,13 +64,13 @@ public class Main {
 
                 System.out.println("With Shared Memory (Sequential Execution) --> ");
                 startTime = System.currentTimeMillis();
-                MultithreadedMergeSort.sequentialMergeSort(unorderedList);
+                MergeSort.sequentialMergeSort(unorderedList);
                 endTime = System.currentTimeMillis();
                 System.out.println("Array Ordered with " + (endTime-startTime) + "ms.");
 
                 System.out.println("With Shared Nothing (Parallel Execution) --> ");
                 startTime = System.currentTimeMillis();
-                MultithreadedMergeSort.parallelMergeSort(unorderedList);
+                MergeSort.parallelMergeSort(unorderedList);
                 endTime = System.currentTimeMillis();
                 System.out.println("Array Ordered with " + (endTime-startTime) + "ms.");
                 break;
