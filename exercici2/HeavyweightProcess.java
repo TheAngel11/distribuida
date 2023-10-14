@@ -13,11 +13,11 @@ public class HeavyweightProcess {
 
     public static void main(String[] args) {
 
-        String myIp = args[1].split(":")[0];
-        String myPort = args[1].split(":")[1];
-        String senderIp = args[2].split(":")[0];
-        String senderPort = args[2].split(":")[1];
-        String myId = args[3];
+        String myIp = args[0].split(":")[0];
+        String myPort = args[0].split(":")[1];
+        String senderIp = args[1].split(":")[0];
+        String senderPort = args[1].split(":")[1];
+        String myId = args[2];
 
         //If I am the first heavyweight process, I have the token
         if (myId.equals("A")) token = true;
@@ -27,12 +27,12 @@ public class HeavyweightProcess {
         List<Process> processes = new ArrayList<>();
         ArrayList<String> lightweightSockets = new ArrayList<>();
         for (int i = 0; i < NUM_LIGHTWEIGHT_PROCESSES; i++) {
-            lightweightSockets.add(myIp + ":" + (Integer.parseInt(myPort) + i));
+            lightweightSockets.add(myIp + ":" + (Integer.parseInt(myPort) + i + 1));
         }
 
         try {
             for (int i = 0; i < NUM_LIGHTWEIGHT_PROCESSES; i++) {
-                ProcessBuilder light = new ProcessBuilder("java", "LightweightProcess", myId + (i + 1), lightweightSockets.toString());
+                ProcessBuilder light = new ProcessBuilder("java", "LightweightProcess", myId + (i + 1), lightweightSockets.toString(), myIp, myPort);
                 light.inheritIO();
                 processes.add(light.start());
             }
@@ -98,7 +98,6 @@ public class HeavyweightProcess {
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
-
     }
 
     private static void listenLightweight(String port) {
