@@ -51,7 +51,9 @@ public class MultithreadedMergeSort extends RecursiveTask<ArrayList<Integer>> {
          *
          */
 
-        return new ForkJoinPool().invoke(new MultithreadedMergeSort(list));
+        ForkJoinPool pool = new ForkJoinPool();
+        //System.out.println("Number of threads: " + pool.getParallelism());
+        return pool.invoke(new MultithreadedMergeSort(list));
     }
 
 

@@ -54,7 +54,7 @@ public class Main {
                 break;
             case 3:
                 // Exercise 7 & 8
-                ARRAY_POSITIONS = 14000000;
+                ARRAY_POSITIONS = 10000000;
                 ArrayList<Integer> unorderedList = new ArrayList<>();
                 for (int i = 0; i < ARRAY_POSITIONS; i++)
                     unorderedList.add(i);
