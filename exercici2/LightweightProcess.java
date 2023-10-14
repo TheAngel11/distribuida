@@ -6,8 +6,17 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+/**
+ * This class represents a lightweight process.
+ * <p>
+ * It requests access to the critical section, prints a message every second 10 times, and releases access to the critical section.
+ * It also notifies the heavyweight process that it has finished.
+ */
 public class LightweightProcess {
 
+    /**
+     * This socket is used to listen for the heavyweight process to notify that the process can start
+     */
     private static ServerSocket serverSocket;
 
     public static void main(String[] args) {
@@ -27,9 +36,14 @@ public class LightweightProcess {
         System.out.printf("Lightweight process %s started\n", myID);
 
         while (true) {
+            //Wait for the heavyweight process to notify that the process can start
             waitHeavyWeight();
+
+            //Request access to the critical section
             requestCS();
-            for (int i = 0; i < 2; i++) {
+
+            //Print a message every second 10 times
+            for (int i = 0; i < 10; i++) {
                 System.out.printf("I'm lightweight process %s\n", myID);
                 try {
                     Thread.sleep(1000);
@@ -38,12 +52,18 @@ public class LightweightProcess {
                 }
             }
 
+            //Release access to the critical section
             releaseCS();
+
+            //Notify the heavyweight process that this process has finished
             notifyHeavyWeight(hwIp, hwPort);
         }
 
     }
 
+    /**
+     * Waits for the heavyweight process to notify that the process can start
+     */
     private static void waitHeavyWeight() {
         try {
             Socket socket = serverSocket.accept();
@@ -56,6 +76,11 @@ public class LightweightProcess {
 
     }
 
+    /**
+     * Notifies the heavyweight process that this process has finished
+     * @param ip The ip of the heavyweight process
+     * @param port The port of the heavyweight process
+     */
     private static void notifyHeavyWeight(String ip, String port) {
         try {
             Socket socket = new Socket(ip, Integer.parseInt(port));
@@ -67,13 +92,25 @@ public class LightweightProcess {
         }
     }
 
+    /**
+     * Releases access to the critical section
+     */
     private static void releaseCS() {
     }
 
+
+    /**
+     * Requests access to the critical section
+     */
     private static void requestCS() {
     }
 
 
+    /**
+     * Converts a string to an ArrayList
+     * @param s The string to convert (format: "[item1, item2, item3]", as returned by Arrays.toString())
+     * @return The ArrayList
+     */
     private static ArrayList<String> stringToArrayList(String s) {
         s = s.substring(1, s.length() - 1); //Remove the square brackets
         String[] items = s.split(", ");  //Split by comma followed by space
