@@ -14,10 +14,8 @@ import java.util.Arrays;
  */
 public class LightweightProcess {
 
-    /**
-     * This socket is used to listen for the heavyweight process to notify that the process can start
-     */
-    private static ServerSocket serverSocket;
+    private static ServerSocket lightWeightServerSocket;
+    private static ServerSocket heavyWeightServerSocket;
 
     public static void main(String[] args) {
 
@@ -26,21 +24,41 @@ public class LightweightProcess {
         String hwIp = args[2];
         String hwPort = args[3];
 
+        int mySocketIndex = Integer.parseInt(myID.charAt(1) + "") - 1;
+        int mySocketForHeavyweight = Integer.parseInt(sockets.get(mySocketIndex).split(":")[1]);
+        int mySocketForLightweight = mySocketForHeavyweight + 100;
+
+        //Remove ourselves from the list of sockets
+        sockets.remove(mySocketIndex);
+
+        //Add 100 to the port of the lightweight processes
+        sockets.replaceAll(s -> s.split(":")[0] + ":" + (Integer.parseInt(s.split(":")[1]) + 100));
+
         //Initialize the server socket
         try {
-            serverSocket = new ServerSocket(Integer.parseInt(sockets.get(Integer.parseInt(myID.charAt(1) + "") - 1).split(":")[1]));
+            lightWeightServerSocket = new ServerSocket(mySocketForLightweight);
+            heavyWeightServerSocket = new ServerSocket(mySocketForHeavyweight);
         } catch (IOException e) {
             System.out.println(e.getMessage());
+            System.exit(0);
         }
 
-        System.out.printf("Lightweight process %s started\n", myID);
+        //Create the LamportMutex, passing the list of sockets, the socket of this process, and our server socket
+        LamportMutex mutex = new LamportMutex(sockets, lightWeightServerSocket);
+
+        // Start a thread to continuously listen for incoming messages
+        new Thread(() -> {
+            while (true) {
+                mutex.receiveMessage();
+            }
+        }).start();
 
         while (true) {
             //Wait for the heavyweight process to notify that the process can start
             waitHeavyWeight();
 
             //Request access to the critical section
-            requestCS();
+            mutex.requestCS();
 
             //Print a message every second 10 times
             for (int i = 0; i < 10; i++) {
@@ -53,7 +71,7 @@ public class LightweightProcess {
             }
 
             //Release access to the critical section
-            releaseCS();
+            mutex.releaseCS();
 
             //Notify the heavyweight process that this process has finished
             notifyHeavyWeight(hwIp, hwPort);
@@ -66,7 +84,7 @@ public class LightweightProcess {
      */
     private static void waitHeavyWeight() {
         try {
-            Socket socket = serverSocket.accept();
+            Socket socket = heavyWeightServerSocket.accept();
             DataInputStream in = new DataInputStream(socket.getInputStream());
             in.readBoolean();
             socket.close();
@@ -91,20 +109,6 @@ public class LightweightProcess {
             System.out.println(e.getMessage());
         }
     }
-
-    /**
-     * Releases access to the critical section
-     */
-    private static void releaseCS() {
-    }
-
-
-    /**
-     * Requests access to the critical section
-     */
-    private static void requestCS() {
-    }
-
 
     /**
      * Converts a string to an ArrayList

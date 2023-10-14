@@ -61,7 +61,7 @@ public class HeavyweightProcess {
         try {
             // Create the lightweight processes
             for (int i = 0; i < NUM_LIGHTWEIGHT_PROCESSES; i++) {
-                ProcessBuilder light = new ProcessBuilder("java", "exercici2/LightweightProcess.java", myId + (i + 1), lightweightSockets.toString(), myIp, myPort);
+                ProcessBuilder light = new ProcessBuilder("java", "LightweightProcess.java", myId + (i + 1), lightweightSockets.toString(), myIp, myPort);
                 light.inheritIO();
                 processes.add(light.start());
             }
