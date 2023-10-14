@@ -54,7 +54,7 @@ public class Main {
                 break;
             case 3:
                 // Exercise 7 & 8
-                ARRAY_POSITIONS = 14000;
+                ARRAY_POSITIONS = 14000000;
                 ArrayList<Integer> unorderedList = new ArrayList<>();
                 for (int i = 0; i < ARRAY_POSITIONS; i++)
                     unorderedList.add(i);
@@ -64,13 +64,13 @@ public class Main {
 
                 System.out.println("With Shared Memory (Sequential Execution) --> ");
                 startTime = System.currentTimeMillis();
-                MergeSort.sequentialMergeSort(unorderedList);
+                MergeSort.sort(unorderedList);
                 endTime = System.currentTimeMillis();
                 System.out.println("Array Ordered with " + (endTime-startTime) + "ms.");
 
                 System.out.println("With Shared Nothing (Parallel Execution) --> ");
                 startTime = System.currentTimeMillis();
-                MergeSort.parallelMergeSort(unorderedList);
+                MultithreadedMergeSort.sort(unorderedList);
                 endTime = System.currentTimeMillis();
                 System.out.println("Array Ordered with " + (endTime-startTime) + "ms.");
                 break;
