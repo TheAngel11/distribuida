@@ -10,6 +10,7 @@ public class HeavyweightProcess {
 
     private static final int NUM_LIGHTWEIGHT_PROCESSES = 3;
     private static boolean token = false;
+    private static ServerSocket serverSocket;
 
     public static void main(String[] args) {
 
@@ -22,6 +23,13 @@ public class HeavyweightProcess {
         //If I am the first heavyweight process, I have the token
         if (myId.equals("A")) token = true;
 
+        //Initialize the server socket
+        try {
+            serverSocket = new ServerSocket(Integer.parseInt(myPort));
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+
         System.out.println("Heavyweight process " + myId + " started");
 
         List<Process> processes = new ArrayList<>();
@@ -32,7 +40,7 @@ public class HeavyweightProcess {
 
         try {
             for (int i = 0; i < NUM_LIGHTWEIGHT_PROCESSES; i++) {
-                ProcessBuilder light = new ProcessBuilder("java", "LightweightProcess", myId + (i + 1), lightweightSockets.toString(), myIp, myPort);
+                ProcessBuilder light = new ProcessBuilder("java", "exercici2/LightweightProcess.java", myId + (i + 1), lightweightSockets.toString(), myIp, myPort);
                 light.inheritIO();
                 processes.add(light.start());
             }
@@ -46,9 +54,17 @@ public class HeavyweightProcess {
             System.out.println(e.getMessage());
         }
 
+
+        //Wait for the lightweight processes to start properly
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
+
         while (true) {
             //If I don't have the token, I listen for it
-            while (!token) listenHeavyweight(myPort);
+            while (!token) listenHeavyweight();
 
             //When I get the token, I send the action to all the lightweight processes (they can start now)
             for (int i = 0; i < NUM_LIGHTWEIGHT_PROCESSES; i++) {
@@ -57,7 +73,7 @@ public class HeavyweightProcess {
 
             //I listen for the lightweight processes to finish
             for (int i = 0; i < NUM_LIGHTWEIGHT_PROCESSES; i++) {
-                listenLightweight(myPort);
+                listenLightweight();
             }
 
             token = false;
@@ -65,9 +81,8 @@ public class HeavyweightProcess {
         }
     }
 
-    private static void listenHeavyweight(String port) {
+    private static void listenHeavyweight() {
         try {
-            ServerSocket serverSocket = new ServerSocket(Integer.parseInt(port));
             Socket socket = serverSocket.accept();
             DataInputStream in = new DataInputStream(socket.getInputStream());
             token = in.readBoolean();
@@ -92,7 +107,6 @@ public class HeavyweightProcess {
         try {
             Socket socket = new Socket(ip, Integer.parseInt(port));
             DataOutputStream os = new DataOutputStream(socket.getOutputStream());
-            // Send action
             os.writeBoolean(true);
             socket.close();
         } catch (IOException e) {
@@ -100,9 +114,8 @@ public class HeavyweightProcess {
         }
     }
 
-    private static void listenLightweight(String port) {
+    private static void listenLightweight() {
         try {
-            ServerSocket serverSocket = new ServerSocket(Integer.parseInt(port));
             Socket socket = serverSocket.accept();
             DataInputStream in = new DataInputStream(socket.getInputStream());
             in.readBoolean();

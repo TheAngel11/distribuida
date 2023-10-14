@@ -8,6 +8,8 @@ import java.util.Arrays;
 
 public class LightweightProcess {
 
+    private static ServerSocket serverSocket;
+
     public static void main(String[] args) {
 
         String myID = args[0];
@@ -15,14 +17,23 @@ public class LightweightProcess {
         String hwIp = args[2];
         String hwPort = args[3];
 
+        //Initialize the server socket
+        try {
+            serverSocket = new ServerSocket(Integer.parseInt(sockets.get(Integer.parseInt(myID.charAt(1) + "") - 1).split(":")[1]));
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+
+        System.out.printf("Lightweight process %s started\n", myID);
+
         while (true) {
-            waitHeavyWeight(sockets.get(Integer.parseInt(myID.charAt(1) + "") - 1).split(":")[1]);
+            waitHeavyWeight();
             requestCS();
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 2; i++) {
                 System.out.printf("I'm lightweight process %s\n", myID);
                 try {
                     Thread.sleep(1000);
-                } catch (InterruptedException e) {
+                } catch (Exception e) {
                     System.out.println(e.getMessage());
                 }
             }
@@ -33,9 +44,8 @@ public class LightweightProcess {
 
     }
 
-    private static void waitHeavyWeight(String port) {
+    private static void waitHeavyWeight() {
         try {
-            ServerSocket serverSocket = new ServerSocket(Integer.parseInt(port));
             Socket socket = serverSocket.accept();
             DataInputStream in = new DataInputStream(socket.getInputStream());
             in.readBoolean();
@@ -64,7 +74,7 @@ public class LightweightProcess {
     }
 
 
-    public static ArrayList<String> stringToArrayList(String s) {
+    private static ArrayList<String> stringToArrayList(String s) {
         s = s.substring(1, s.length() - 1); //Remove the square brackets
         String[] items = s.split(", ");  //Split by comma followed by space
         return new ArrayList<>(Arrays.asList(items));
