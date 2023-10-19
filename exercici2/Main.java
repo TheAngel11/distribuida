@@ -10,8 +10,8 @@ public class Main {
 
         try{
             // Create the two heavyweight processes
-            String heavy1Socket = "localhost:6030";
-            String heavy2Socket = "localhost:6010";
+            String heavy1Socket = "localhost:3040";
+            String heavy2Socket = "localhost:5020";
             ProcessBuilder heavy1 = new ProcessBuilder("java", "HeavyweightProcess.java", heavy1Socket, heavy2Socket, "A");
             ProcessBuilder heavy2 = new ProcessBuilder("java", "HeavyweightProcess.java", heavy2Socket, heavy1Socket, "B");
 
@@ -31,7 +31,9 @@ public class Main {
             }));
 
             //Don't let the main process die. The heavyweight processes will be destroyed when this process is killed
-            while(true);
+            while(true){
+                Thread.sleep(1000);
+            }
         } catch(Exception e) {
             System.out.println(e.getMessage());
         }

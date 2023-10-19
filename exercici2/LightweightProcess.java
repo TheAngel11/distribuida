@@ -29,10 +29,15 @@ public class LightweightProcess {
         int mySocketForLightweight = mySocketForHeavyweight + 100;
 
         //Remove ourselves from the list of sockets
-        sockets.remove(mySocketIndex);
+        sockets.set(mySocketIndex, null);
 
         //Add 100 to the port of the lightweight processes
-        sockets.replaceAll(s -> s.split(":")[0] + ":" + (Integer.parseInt(s.split(":")[1]) + 100));
+        sockets.replaceAll(s -> {
+            if (s == null) return null;
+            String host = s.split(":")[0];
+            int port = Integer.parseInt(s.split(":")[1]) + 100;
+            return host + ":" + port;
+        });
 
         //Initialize the server socket
         try {
@@ -43,17 +48,10 @@ public class LightweightProcess {
             System.exit(0);
         }
 
-        //Create the LamportMutex, passing the list of sockets, the socket of this process, and our server socket
-        LamportMutex mutex = new LamportMutex(sockets, lightWeightServerSocket);
-
-        // Start a thread to continuously listen for incoming messages
-        new Thread(() -> {
-            while (true) {
-                mutex.receiveMessage();
-            }
-        }).start();
-
         while (true) {
+            //Create the LamportMutex, passing the list of sockets, the socket of this process, and our server socket
+            LamportMutex mutex = new LamportMutex(Integer.parseInt(String.valueOf(myID.charAt(1))), sockets, lightWeightServerSocket);
+
             //Wait for the heavyweight process to notify that the process can start
             waitHeavyWeight();
 
@@ -61,7 +59,7 @@ public class LightweightProcess {
             mutex.requestCS();
 
             //Print a message every second 10 times
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 1; i++) {
                 System.out.printf("I'm lightweight process %s\n", myID);
                 try {
                     Thread.sleep(1000);
@@ -75,6 +73,9 @@ public class LightweightProcess {
 
             //Notify the heavyweight process that this process has finished
             notifyHeavyWeight(hwIp, hwPort);
+
+            //Destroy the mutex
+            mutex.destroy();
         }
 
     }
@@ -96,7 +97,8 @@ public class LightweightProcess {
 
     /**
      * Notifies the heavyweight process that this process has finished
-     * @param ip The ip of the heavyweight process
+     *
+     * @param ip   The ip of the heavyweight process
      * @param port The port of the heavyweight process
      */
     private static void notifyHeavyWeight(String ip, String port) {
@@ -112,6 +114,7 @@ public class LightweightProcess {
 
     /**
      * Converts a string to an ArrayList
+     *
      * @param s The string to convert (format: "[item1, item2, item3]", as returned by Arrays.toString())
      * @return The ArrayList
      */
