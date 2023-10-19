@@ -9,6 +9,11 @@ import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * This class represents a Lamport mutex
+ * <p>
+ * It is used to synchronize access to the critical section between multiple processes
+ */
 public class LamportMutex {
 
     /**
@@ -97,11 +102,11 @@ public class LamportMutex {
         int senderID = Integer.parseInt(parts[1]);
         int timestamp = Integer.parseInt(parts[2]);
 
-        // Update the Lamport clock (the max between the current value and the timestamp of the message + 1)
-        lamportClock.updateAndGet(current -> Math.max(current, timestamp) + 1);
-
         switch (type) {
             case "REQUEST":
+                // Update the Lamport clock (the max between the current value and the timestamp of the message + 1)
+                lamportClock.updateAndGet(current -> Math.max(current, timestamp) + 1);
+
                 // If it's a request, add it to the queue and send an acknowledgment
                 synchronized (queue) {
                     queue.add(new Request(senderID, timestamp));
@@ -109,11 +114,17 @@ public class LamportMutex {
                 sendAcknowledgment(senderID);
                 break;
             case "ACK":
+                // Update the Lamport clock (the max between the current value and the timestamp of the message + 1)
+                lamportClock.updateAndGet(current -> Math.max(current, timestamp) + 1);
+
                 // If it's an acknowledgment, add it to the map
                 acksReceived.put(senderID, true);
                 break;
             case "RELEASE":
                 // If it's a release, remove the request from the queue
+                // Note we're not updating the lamport clock in the release message.
+                //  If we did, we could have a situation where the process that sent the release message
+                //  has a lower timestamp than the process that sent the request message
                 synchronized (queue) {
                     queue.removeIf(req -> req.processID == senderID);
                 }
