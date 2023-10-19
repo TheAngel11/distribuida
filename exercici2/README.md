@@ -13,3 +13,8 @@ Use the script provided to compile the code and run the program
 $ chmod +x exercici2.sh
 $ ./exercici2.sh
 ```
+
+## Authors
+Angel Garcia (angel.garcia@students.salle.url.edu)
+<br>
+Biel Carpi (biel.carpi@students.salle.url.edu)
