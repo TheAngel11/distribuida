@@ -4,6 +4,7 @@
 # User-specific stuff
 .idea
 .DS_Store
+./out/
 
 # CMake
 cmake-build-*/
