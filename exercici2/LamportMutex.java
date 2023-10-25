@@ -61,11 +61,6 @@ public class LamportMutex {
     }
 
 
-    public void destroy() {
-        t.interrupt();
-    }
-
-
     /**
      * This method listens for incoming messages
      * It runs in a separate thread (invoked from the constructor,

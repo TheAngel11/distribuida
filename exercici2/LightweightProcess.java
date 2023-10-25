@@ -59,7 +59,7 @@ public class LightweightProcess {
             mutex.requestCS();
 
             //Print a message every second 10 times
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 1; i++) {
                 System.out.printf("I'm lightweight process %s\n", myID);
                 try {
                     Thread.sleep(1000);
@@ -73,9 +73,6 @@ public class LightweightProcess {
 
             //Notify the heavyweight process that this process has finished
             notifyHeavyWeight(hwIp, hwPort);
-
-            //Destroy the mutex
-            mutex.destroy();
         }
 
     }
