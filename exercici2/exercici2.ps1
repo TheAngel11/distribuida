@@ -15,13 +15,14 @@ javac -d .\out LamportMutex.java
 # Compile the RicartAgrawalaMutex.java file into the .\out directory
 javac -d .\out RicartAgrawalaMutex.java
 
-# Copy the Main.java, HeavyWeightProcess and LightweightProcess file into the .\out directory
-Copy-Item -Path "Main.java", "HeavyWeightProcess.java", "LightweightProcess.java" -Destination ".\out"
-
 # Check if compilation was successful
 if ($?) {
+    # Copy the Main.java, HeavyWeightProcess and LightweightProcess file into the .\out directory
+    Copy-Item -Path "Main.java", "HeavyWeightProcess.java", "LightweightProcess.java" -Destination ".\out"
+
     # Change directory
     Set-Location -Path ".\out"
+
     # Run the Main class
     java Main
 } else {
