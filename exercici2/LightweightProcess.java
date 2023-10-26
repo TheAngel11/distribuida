@@ -49,7 +49,13 @@ public class LightweightProcess {
         }
 
         //Create the LamportMutex, passing the list of sockets, the socket of this process, and our server socket
-        LamportMutex mutex = new LamportMutex(Integer.parseInt(String.valueOf(myID.charAt(1))), sockets, lightWeightServerSocket);
+        DistributedMutex mutex;
+        int myIDNum = Integer.parseInt(String.valueOf(myID.charAt(1)));
+
+        //If the process is A, use LamportMutex, else use RicartAgrawalaMutex
+        if(myID.charAt(0) == 'A') mutex = new LamportMutex(myIDNum, sockets, lightWeightServerSocket);
+        else mutex = new RicartAgrawalaMutex(myIDNum, sockets, lightWeightServerSocket);
+
 
         while (true) {
             //Wait for the heavyweight process to notify that the process can start
@@ -59,10 +65,10 @@ public class LightweightProcess {
             mutex.requestCS();
 
             //Print a message every second 10 times
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 1; i++) {
                 System.out.printf("I'm lightweight process %s\n", myID);
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(500);
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
                 }
@@ -73,9 +79,6 @@ public class LightweightProcess {
 
             //Notify the heavyweight process that this process has finished
             notifyHeavyWeight(hwIp, hwPort);
-
-            //Destroy the mutex
-            mutex.destroy();
         }
 
     }

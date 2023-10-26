@@ -1,27 +1,13 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class represents a Lamport mutex
  * <p>
  * It is used to synchronize access to the critical section between multiple processes
  */
-public class LamportMutex {
-
-    /**
-     * Lamport's logical clock, initialized to 0
-     * <br>
-     * Atomic so that it can be incremented atomically, on different threads
-     */
-    private final AtomicInteger lamportClock = new AtomicInteger(0);
+public class LamportMutex extends DistributedMutex {
 
     /**
      * This queue stores the requests to enter the critical section
@@ -37,65 +23,12 @@ public class LamportMutex {
         return compare;
     });
 
-    /**
-     * This map stores the acknowledgments received for the current request
-     * <br>
-     * It is synchronized too so that it can be accessed by different threads
-     */
-    private final ConcurrentHashMap<Integer, Boolean> acksReceived = new ConcurrentHashMap<>();
-
-    private final int myID;
-    private final ServerSocket serverSocket;
-    private final List<String> clientSockets;
-
-    private final Thread t;
 
     public LamportMutex(int myID, List<String> clientSockets, ServerSocket serverSocket) {
-        this.myID = myID;
-        this.serverSocket = serverSocket;
-        this.clientSockets = clientSockets; // Our socket is null, so we don't send messages to ourselves
-
-        // Finally, Start a thread to listen for incoming messages
-        t = new Thread(this::listenForMessages);
-        t.start();
+        super(myID, clientSockets, serverSocket);
     }
 
-
-    public void destroy() {
-        t.interrupt();
-    }
-
-
-    /**
-     * This method listens for incoming messages
-     * It runs in a separate thread (invoked from the constructor,
-     * so that it doesn't block the main thread
-     */
-    private void listenForMessages() {
-        while (true) {
-            try {
-                // Await a connection
-                Socket socket = serverSocket.accept();
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                String message = in.readLine();
-
-                // Handle the message
-                handleMessage(message);
-
-                in.close();
-                socket.close();
-            } catch (IOException e) {
-                System.out.println(e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * This method handles an incoming message
-     *
-     * @param message The message to handle
-     */
-    private void handleMessage(String message) {
+    public void handleMessage(String message) {
         // Message format: "TYPE:SENDER_ID:TIMESTAMP"
         String[] parts = message.split(":");
         String type = parts[0];
@@ -133,11 +66,6 @@ public class LamportMutex {
     }
 
 
-    /**
-     * This method requests access to the critical section
-     * <br>
-     * It blocks until the process has access to the critical section
-     */
     public void requestCS() {
         int timestamp = lamportClock.incrementAndGet();
 
@@ -174,45 +102,11 @@ public class LamportMutex {
     }
 
 
+
     private boolean isMyRequestAtHeadOfQueue() {
         // Check if the first element is our request
         synchronized (queue) {
             return !queue.isEmpty() && queue.peek().processID == myID;
-        }
-    }
-
-    private void sendRequestToAllProcesses(Request request) {
-        sendMessageToAllProcesses("REQUEST:" + request.processID + ":" + request.timestamp);
-    }
-
-    private void sendReleaseToAllProcesses() {
-        sendMessageToAllProcesses("RELEASE:" + myID + ":" + lamportClock.get());
-    }
-
-    private void sendAcknowledgment(int processID) {
-        sendMessage("ACK:" + myID + ":" + lamportClock.get(), processID);
-    }
-
-    private void sendMessageToAllProcesses(String message) {
-        for (String socket : clientSockets) {
-            if (socket == null) continue; //Don't send messages to ourselves (our socket is null
-            sendMessage(message, socket);
-        }
-    }
-
-    private void sendMessage(String message, int processID) {
-        sendMessage(message, clientSockets.get(processID - 1));
-    }
-
-    private void sendMessage(String message, String socket) {
-        try {
-            Socket s = new Socket(socket.split(":")[0], Integer.parseInt(socket.split(":")[1]));
-            PrintWriter out = new PrintWriter(s.getOutputStream(), true);
-            out.println(message);
-            out.flush();
-            s.close();
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
         }
     }
 
