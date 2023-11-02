@@ -19,7 +19,7 @@ javac -d ./out RicartAgrawalaMutex.java
 
 # Copy the Main.java, HeavyWeightProcess and LightweightProcess file into the ./out directory
 cp Main.java ./out
-cp HeavyWeightProcess.java ./out
+cp HeavyweightProcess.java ./out
 cp LightweightProcess.java ./out
 
 # Check if compilation was successful
