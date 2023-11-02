@@ -48,7 +48,7 @@ public class LightweightProcess {
             System.exit(0);
         }
 
-        //Create the LamportMutex, passing the list of sockets, the socket of this process, and our server socket
+        //Create the DistributedMutex, passing the list of sockets, the socket of this process, and our server socket
         DistributedMutex mutex;
         int myIDNum = Integer.parseInt(String.valueOf(myID.charAt(1)));
 
