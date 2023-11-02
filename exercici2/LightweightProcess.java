@@ -65,10 +65,10 @@ public class LightweightProcess {
             mutex.requestCS();
 
             //Print a message every second 10 times
-            for (int i = 0; i < 1; i++) {
+            for (int i = 0; i < 10; i++) {
                 System.out.printf("I'm lightweight process %s\n", myID);
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(1000);
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
                 }
