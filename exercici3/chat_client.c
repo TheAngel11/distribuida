@@ -6,14 +6,52 @@
 #include <ncurses.h>
 #include <pthread.h>
 
+#define INPUT_HEIGHT 3
+
 char *server;
 CLIENT *client;
+WINDOW *messages_win, *input_win;
+int getstr_interrupted = 0;
+
+void init_ncurses(){
+    // Initialize ncurses
+    initscr();
+    cbreak();
+
+    // Get the size of the window
+    int max_y, max_x;
+    getmaxyx(stdscr, max_y, max_x);
+
+    // Create a window for displaying messages
+    messages_win = newwin(max_y - INPUT_HEIGHT, max_x, 0, 0);
+    scrollok(messages_win, TRUE); // Enable scrolling
+
+    // Create a window for the input area
+    input_win = newwin(INPUT_HEIGHT, max_x, max_y - INPUT_HEIGHT, 0);
+}
+
+void draw_messages(WINDOW *messages_win, const char *messages, int row) {
+    row++; // Start on the next line
+
+    char *message = strtok(strdup(messages), "\n");
+    while (message) {
+        // Print each message on a new line
+        mvwprintw(messages_win, row++, 1, "%s", message);
+        message = strtok(NULL, "\n");
+    }
+    box(messages_win, 0, 0);
+    wrefresh(messages_win);
+}
+
+void draw_input(WINDOW *input_win, const char *prompt) {
+    werase(input_win);
+    box(input_win, 0, 0);
+    mvwprintw(input_win, 1, 1, "%s", prompt);
+    wrefresh(input_win);
+}
+
 
 void *refresh_chat(void *nickname) {
-    initscr(); // Start curses mode
-    noecho(); // Don't echo input
-    cbreak(); // Line buffering disabled
-
     int line_num = 0; // Keeps track of the number of lines printed (the number of chat messages we have)
 
     while (1) {
@@ -21,7 +59,6 @@ void *refresh_chat(void *nickname) {
 
         // Handle RPC call failure
         if (message == NULL || *message == NULL) {
-            endwin(); // End curses mode
             return NULL;
         }
 
@@ -35,13 +72,15 @@ void *refresh_chat(void *nickname) {
             line_ptr++;
         }
 
-        // Update the total line count
-        line_num += new_lines;
-
-        printw("%s", *message); // Print the chat messages
+        getstr_interrupted = 1; // Set the flag to indicate that the getnstr was interrupted
+        draw_messages(messages_win, *message, line_num); // Draw new received messages
         refresh(); // Refresh the screen
+        getstr_interrupted = 0; // Reset the flag
 
         free(*message);
+
+        // Update the total line count
+        line_num += new_lines;
 
         // Wait a second before refreshing again
         sleep(1);
@@ -53,11 +92,20 @@ void *refresh_chat(void *nickname) {
 
 void send_message(char *nickname) {
     char msg[256];
-    echo();  // Echo input to screen
+    char *prompt;
+    asprintf(&prompt, "%s --> ", nickname);
+    memset(msg, 0, sizeof(msg));
 
     while (1) {
-        mvprintw(LINES-1, 0, "%s --> ", nickname); // Print the prompt
-        getnstr(msg, sizeof(msg) - 1); // Get the message from the user
+        // Get the message from the user
+        draw_input(input_win, prompt);
+        wgetnstr(input_win, msg, sizeof(msg) - 1);
+
+        // Check if the getnstr was interrupted by the other thread
+        // (the printw on the other thread disrupts the wgetnstr)
+        if(getstr_interrupted == 1 || strlen(msg) == 0){
+            continue;
+        }
 
         // Build the message to include the nickname
         char full_msg[300];
@@ -67,8 +115,15 @@ void send_message(char *nickname) {
 
         // Send the message
         write_1(&p_msg, client);
+
+        // Empty the msg buffer
+        memset(msg, 0, sizeof(msg));
     }
+
+    free(prompt);
 }
+
+
 
 
 int main(int argc, char *argv[]) {
@@ -79,6 +134,9 @@ int main(int argc, char *argv[]) {
 
     server = argv[1];
     char *nickname = argv[2];
+
+    // Init ncurses
+    init_ncurses();
 
     // Create the connection to the server
     client = clnt_create(server, CHATPROG, CHATVERS, "udp");
@@ -100,5 +158,8 @@ int main(int argc, char *argv[]) {
     // TODO: We should do this in the SIGINT/SIGTERM handler
     pthread_join(refresh_thread, NULL);
     clnt_destroy(client);
+    delwin(messages_win);
+    delwin(input_win);
+    endwin();
     return 0;
 }

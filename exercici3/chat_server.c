@@ -26,7 +26,7 @@ int * write_1_svc(char **msg, struct svc_req *req) {
         return &result;
     }
 
-    fprintf(file, "%s\n", *msg);
+    fprintf(file, "%s", *msg);
     fclose(file);
 
     result = 1; // Success
