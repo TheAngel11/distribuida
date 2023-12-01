@@ -4,11 +4,9 @@ import (
 	"exercici4/client"
 	"exercici4/node"
 	"exercici4/web_server"
-	"sync"
 )
 
 func main() {
-	var wg sync.WaitGroup
 	coreNodes := make([]*node.CoreNode, 3)
 	layer1Nodes := make([]*node.Layer1Node, 2)
 	layer2Nodes := make([]*node.Layer2Node, 2)
@@ -37,18 +35,11 @@ func main() {
 		}(layer2Nodes[i])
 	}
 
-	// Once all nodes are running, start the web server
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		web_server.Start()
-	}()
-
 	// Start client to issue transactions
 	go func() {
 		client.Start("client/transactions.txt")
 	}()
 
-	// Wait for all nodes to finish
-	wg.Wait()
+	// Start web server
+	web_server.Start()
 }
