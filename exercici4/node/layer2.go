@@ -1,15 +1,38 @@
 package node
 
-import "fmt"
+import (
+	"log"
+	"net"
+)
 
-type Layer2Node struct {
-	// Define necessary fields
+type L2Node struct {
+	data map[int]int // Data
 }
 
-func Layer2NodeProvider() *Layer2Node {
-	return &Layer2Node{}
+func L2NodeProvider() *L2Node {
+	return &L2Node{}
 }
 
-func (n *Layer2Node) Start() {
-	fmt.Println("Layer 2 node started")
+func (n *L2Node) Start(address string) {
+	ln, err := net.Listen("tcp", address)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer ln.Close()
+
+	// Accept connections
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		go handleL2Connection(conn)
+	}
+}
+
+// handleConnection handles a petition from a client.
+func handleL2Connection(conn net.Conn) {
+	defer conn.Close()
 }
