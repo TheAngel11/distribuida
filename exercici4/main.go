@@ -1,6 +1,7 @@
 package main
 
 import (
+	"exercici4/client"
 	"exercici4/node"
 	"sync"
 )
@@ -41,5 +42,13 @@ func main() {
 		}(layer2Nodes[i])
 	}
 
+	// Start client to issue transactions
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		client.Start("data/transactions.txt")
+	}()
+
+	// Wait for all nodes to finish
 	wg.Wait()
 }
