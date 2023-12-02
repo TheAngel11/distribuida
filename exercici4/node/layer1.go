@@ -4,20 +4,23 @@ import (
 	"encoding/gob"
 	"exercici4/comm"
 	"exercici4/transaction"
+	"exercici4/web_server"
 	"log"
 	"net"
 	"sync"
 )
 
 type L1Node struct {
+	id           int          //1, 2
 	data         map[int]int  // Data to be replicated
 	mutex        sync.RWMutex // Read-write mutex
 	otherL1Nodes []string     // IP @ of Other L1 nodes in the network
 	L2Nodes      []string     // IP @ of Layer 2 nodes in the network
 }
 
-func L1NodeProvider(otherL1Nodes, l2Nodes []string) *L1Node {
+func L1NodeProvider(id int, otherL1Nodes, l2Nodes []string) *L1Node {
 	return &L1Node{
+		id:           id,
 		data:         make(map[int]int),
 		otherL1Nodes: otherL1Nodes,
 		L2Nodes:      l2Nodes,
@@ -53,6 +56,7 @@ func (n *L1Node) ReadData(key int) (int, bool) {
 func (n *L1Node) WriteData(key int, value int) {
 	n.mutex.Lock() // Lock for writing
 	n.data[key] = value
+	web_server.TriggerNodeUpdate(n.id, 1, n.data)
 	n.mutex.Unlock() // Unlock after writing
 }
 

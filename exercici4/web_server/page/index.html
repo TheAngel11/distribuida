@@ -1,14 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Epidemic Replication</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
 </head>
 <body>
-<h1>Epidemic Replication</h1>
-<button id="connectBtn">Connect</button>
-</body>
+<div class="container">
+    <h1>Epidemic Replication</h1>
+    <p>Status: <span id="status" style="color: red">Disconnected</span></p>
+    <div class="category">
+        <h2>Core Nodes</h2>
+        <div class="subcategory">
+            <h3>Core Node A1</h3>
+            <p id="01">Empty</p>
+            <br>
+        </div>
+        <div class="subcategory">
+            <h3>Core Node A2</h3>
+            <p id="02">Empty</p>
+            <br>
+        </div>
+        <div class="subcategory">
+            <h3>Core Node A3</h3>
+            <p id="03">Empty</p>
+            <br>
+        </div>
+    </div>
+    <div class="category">
+        <h2>L1 Nodes</h2>
+        <div class="subcategory">
+            <h3>L1 Node B1</h3>
+            <p id="11">Empty</p>
+            <br>
+        </div>
+        <div class="subcategory">
+            <h3>L1 Node B2</h3>
+            <p id="12">Empty</p>
+            <br>
+        </div>
+    </div>
+    <div class="category">
+        <h2>L2 Nodes</h2>
+        <div class="subcategory" id="l2-node-C1">
+            <h3>L2 Node C1</h3>
+            <p id="21">Empty</p>
+            <br>
+        </div>
+        <div class="subcategory" id="l2-node-C2">
+            <h3>L2 Node C2</h3>
+            <p id="22">Empty</p>
+            <br>
+        </div>
+    </div>
+</div>
 <script src="js/app.js"></script>
+</body>
 </html>

@@ -28,17 +28,15 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 func handleConnection(conn *websocket.Conn) {
 	defer conn.Close()
 
-	for {
-		// Read message from WebSocket connection
-		_, msg, err := conn.ReadMessage()
-		if err != nil {
-			return
-		}
+	// Subscribe to broadcaster
+	chann := broadcaster.Subscribe()
 
+	// For each message received from the broadcaster, write it to the WebSocket connection
+	for msg := range chann {
 		// Write message to WebSocket connection
-		err = conn.WriteMessage(websocket.TextMessage, msg)
+		err := conn.WriteMessage(websocket.TextMessage, []byte(msg))
 		if err != nil {
-			return
+			return // Stop handling connection
 		}
 	}
 }

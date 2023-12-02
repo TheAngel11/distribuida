@@ -36,7 +36,7 @@ func main() {
 	for i := range coreNodes {
 		// Create a new slice excluding the address at index i
 		addresses := utils.ExcludeElement(coreNodeAddresses, i)
-		coreNodes[i] = node.CoreNodeProvider(addresses, l1NodeAddresses)
+		coreNodes[i] = node.CoreNodeProvider(i+1, addresses, l1NodeAddresses)
 
 		// Start node
 		go coreNodes[i].Start(coreNodeAddresses[i])
@@ -46,7 +46,7 @@ func main() {
 	for i := range layer1Nodes {
 		// Create a new slice excluding the address at index i
 		addresses := utils.ExcludeElement(l1NodeAddresses, i)
-		layer1Nodes[i] = node.L1NodeProvider(addresses, l2NodeAddresses)
+		layer1Nodes[i] = node.L1NodeProvider(i+1, addresses, l2NodeAddresses)
 
 		// Start node
 		go layer1Nodes[i].Start(l1NodeAddresses[i])
@@ -56,7 +56,7 @@ func main() {
 	for i := range layer2Nodes {
 		// Create a new slice excluding the address at index i
 		addresses := utils.ExcludeElement(l2NodeAddresses, i)
-		layer2Nodes[i] = node.L2NodeProvider(addresses)
+		layer2Nodes[i] = node.L2NodeProvider(i+1, addresses)
 
 		// Start node
 		go layer2Nodes[i].Start(l2NodeAddresses[i])
