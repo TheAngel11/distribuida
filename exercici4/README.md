@@ -24,3 +24,12 @@ go run main.go
 <br>
 
 You can now access the web server at http://localhost:8080
+
+<br>
+<br>
+
+To generate a new transactions.txt file, you can use the following python script:
+```bash
+cd client
+python3 generate_transactions.py
+```
