@@ -15,8 +15,10 @@ type Transaction struct {
 }
 type Operation struct {
 	// If the operation is a read, then WriteKeyValue is nil
-	ReadKey       int
-	WriteKeyValue []int // [0] = key, [1] = value
+	ReadKey                int
+	WriteKeyValue          []int // [0] = key, [1] = value
+	IsReplicationOperation bool
+	// If it's a replication operation, then the core node which receives it should not send it to the other nodes
 }
 
 func NewTransaction(line string) *Transaction {

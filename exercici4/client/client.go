@@ -34,7 +34,7 @@ func sendTransactionToNode(t *transaction.Transaction, nodes [][]string) error {
 
 	// Send each operation to the node
 	for _, operation := range t.Operations {
-		err := sendOperationToNode(operation, nodes[t.Layer][randomNode])
+		err := SendOperationToNode(operation, nodes[t.Layer][randomNode])
 		if err != nil {
 			return err
 		}
@@ -46,7 +46,7 @@ func sendTransactionToNode(t *transaction.Transaction, nodes [][]string) error {
 	return nil
 }
 
-func sendOperationToNode(operation transaction.Operation, nodeAddress string) error {
+func SendOperationToNode(operation transaction.Operation, nodeAddress string) error {
 	fmt.Println("Sending operation to node:", operation.String(), nodeAddress)
 
 	conn, err := net.Dial("tcp", nodeAddress)

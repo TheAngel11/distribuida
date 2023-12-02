@@ -2,6 +2,7 @@ package node
 
 import (
 	"encoding/gob"
+	"exercici4/client"
 	"exercici4/comm"
 	"exercici4/transaction"
 	"exercici4/web_server"
@@ -82,11 +83,35 @@ func (n *CoreNode) handleConnection(conn net.Conn) {
 		operation := msg.(transaction.Operation)
 		if operation.WriteKeyValue != nil {
 			n.WriteData(operation.WriteKeyValue[0], operation.WriteKeyValue[1])
+
+			// If it's not a replication operation, then send it to the other nodes (eager replication)
+			if operation.IsReplicationOperation == false {
+				wg := sync.WaitGroup{}
+				// Send operation to other core nodes
+				operation.IsReplicationOperation = true
+				for _, otherNodeCore := range n.otherNodeCores {
+					wg.Add(1)
+					go func(nodeToSendMsg string) {
+						err := client.SendOperationToNode(operation, nodeToSendMsg)
+						if err != nil {
+							//TODO: What if one of the other nodes fails?
+							// We should cancel all the other transactions already done
+							// We won't handle this for now
+							log.Println("Error sending operation to other core:", err)
+						}
+						wg.Done()
+					}(otherNodeCore)
+				}
+				wg.Wait() // Wait for all the other nodes to finish
+			}
+
+			// Send success message to client
 			_ = encoder.Encode(comm.ReceiveMessage{Success: true})
 		} else {
 			result, success := n.ReadData(operation.ReadKey)
 			_ = encoder.Encode(comm.ReceiveMessage{Success: success, Value: result})
 		}
+
 	}
 
 }
