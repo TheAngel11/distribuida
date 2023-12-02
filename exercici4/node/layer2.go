@@ -3,6 +3,7 @@ package node
 import (
 	"encoding/gob"
 	"exercici4/comm"
+	"exercici4/replication"
 	"exercici4/transaction"
 	"exercici4/web_server"
 	"log"
@@ -83,6 +84,18 @@ func (n *L2Node) handleL2Connection(conn net.Conn) {
 			_ = encoder.Encode(comm.ReceiveMessage{Success: true})
 		} else {
 			_ = encoder.Encode(comm.ReceiveMessage{Success: false})
+		}
+	case replication.ReplicationMessage:
+		// Handle replication message
+		replicationMessage := msg.(replication.ReplicationMessage)
+		n.data = replicationMessage.Data
+		web_server.TriggerNodeUpdate(n.id, 2, n.data)
+
+		if replicationMessage.IsFirstReplication {
+			// If this is the first replication, send the data to the other L2 nodes
+			for _, nodeAddress := range n.otherL2Nodes {
+				go replication.SendHashmapToNode(n.data, nodeAddress, false)
+			}
 		}
 	}
 }

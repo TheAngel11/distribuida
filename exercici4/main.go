@@ -5,6 +5,7 @@ import (
 	"exercici4/client"
 	"exercici4/comm"
 	"exercici4/node"
+	"exercici4/replication"
 	"exercici4/transaction"
 	"exercici4/utils"
 	"exercici4/web_server"
@@ -36,7 +37,9 @@ func main() {
 	for i := range coreNodes {
 		// Create a new slice excluding the address at index i
 		addresses := utils.ExcludeElement(coreNodeAddresses, i)
-		coreNodes[i] = node.CoreNodeProvider(i+1, addresses, l1NodeAddresses)
+
+		// Primary Backup L1 node is the first L1 node in the list
+		coreNodes[i] = node.CoreNodeProvider(i+1, addresses, l1NodeAddresses[0])
 
 		// Start node
 		go coreNodes[i].Start(coreNodeAddresses[i])
@@ -46,7 +49,9 @@ func main() {
 	for i := range layer1Nodes {
 		// Create a new slice excluding the address at index i
 		addresses := utils.ExcludeElement(l1NodeAddresses, i)
-		layer1Nodes[i] = node.L1NodeProvider(i+1, addresses, l2NodeAddresses)
+
+		// Primary Backup L2 node is the first L2 node in the list
+		layer1Nodes[i] = node.L1NodeProvider(i+1, addresses, l2NodeAddresses[0])
 
 		// Start node
 		go layer1Nodes[i].Start(l1NodeAddresses[i])
@@ -62,8 +67,10 @@ func main() {
 		go layer2Nodes[i].Start(l2NodeAddresses[i])
 	}
 
+	// Register types for gob
 	gob.Register(transaction.Operation{})
 	gob.Register(comm.ReceiveMessage{})
+	gob.Register(replication.ReplicationMessage{})
 
 	// Start client to issue transactions
 	go client.Start("client/transactions.txt", time.Second*10,

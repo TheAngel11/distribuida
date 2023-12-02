@@ -3,27 +3,29 @@ package node
 import (
 	"encoding/gob"
 	"exercici4/comm"
+	"exercici4/replication"
 	"exercici4/transaction"
 	"exercici4/web_server"
 	"log"
 	"net"
 	"sync"
+	"time"
 )
 
 type L1Node struct {
-	id           int          //1, 2
-	data         map[int]int  // Data to be replicated
-	mutex        sync.RWMutex // Read-write mutex
-	otherL1Nodes []string     // IP @ of Other L1 nodes in the network
-	L2Nodes      []string     // IP @ of Layer 2 nodes in the network
+	id            int          //1, 2
+	data          map[int]int  // Data to be replicated
+	mutex         sync.RWMutex // Read-write mutex
+	otherL1Nodes  []string     // IP @ of Other L1 nodes in the network
+	L2PrimaryNode string       // IP @ of Primary Backup L2 node in the network
 }
 
-func L1NodeProvider(id int, otherL1Nodes, l2Nodes []string) *L1Node {
+func L1NodeProvider(id int, otherL1Nodes []string, l2PrimaryNode string) *L1Node {
 	return &L1Node{
-		id:           id,
-		data:         make(map[int]int),
-		otherL1Nodes: otherL1Nodes,
-		L2Nodes:      l2Nodes,
+		id:            id,
+		data:          make(map[int]int),
+		otherL1Nodes:  otherL1Nodes,
+		L2PrimaryNode: l2PrimaryNode,
 	}
 }
 
@@ -86,6 +88,24 @@ func (n *L1Node) handleL1Connection(conn net.Conn) {
 		} else {
 			_ = encoder.Encode(comm.ReceiveMessage{Success: false})
 		}
-	}
+	case replication.ReplicationMessage:
+		// Handle replication message
+		replicationMessage := msg.(replication.ReplicationMessage)
+		n.data = replicationMessage.Data
+		web_server.TriggerNodeUpdate(n.id, 1, n.data)
+		_ = encoder.Encode(comm.ReceiveMessage{Success: true})
 
+		if replicationMessage.IsFirstReplication {
+			// Send replication message to other L1 nodes
+			for _, nodeAddress := range n.otherL1Nodes {
+				go replication.SendHashmapToNode(n.data, nodeAddress, false)
+			}
+
+			// Send replication message to L2 primary node in 10 seconds
+			go func() {
+				<-time.After(10 * time.Second)
+				go replication.SendHashmapToNode(n.data, n.L2PrimaryNode, true)
+			}()
+		}
+	}
 }

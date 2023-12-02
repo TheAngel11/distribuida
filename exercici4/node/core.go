@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"exercici4/client"
 	"exercici4/comm"
+	"exercici4/replication"
 	"exercici4/transaction"
 	"exercici4/web_server"
 	"log"
@@ -16,15 +17,16 @@ type CoreNode struct {
 	data           map[int]int  // Data to be replicated
 	mutex          sync.RWMutex // Read-write mutex
 	otherNodeCores []string     // IP @ of Other core nodes in the network
-	L1Nodes        []string     // IP @ of Layer 1 nodes in the network
+	L1PrimaryNode  string       // IP @ of Primary Backup L1 node in the network
+	updateCounter  int          // Every 10 updates, send the data to L1 node
 }
 
-func CoreNodeProvider(id int, otherNodeCores, l1Nodes []string) *CoreNode {
+func CoreNodeProvider(id int, otherNodeCores []string, l1PrimaryNode string) *CoreNode {
 	return &CoreNode{
 		id:             id,
 		data:           make(map[int]int),
 		otherNodeCores: otherNodeCores,
-		L1Nodes:        l1Nodes,
+		L1PrimaryNode:  l1PrimaryNode,
 	}
 }
 
@@ -83,6 +85,17 @@ func (n *CoreNode) handleConnection(conn net.Conn) {
 		operation := msg.(transaction.Operation)
 		if operation.WriteKeyValue != nil {
 			n.WriteData(operation.WriteKeyValue[0], operation.WriteKeyValue[1])
+
+			// Check if we need to send the data to the L1 node
+			n.updateCounter++
+			if n.updateCounter >= 10 {
+				n.updateCounter = 0
+				// Only send to L1 Primary Backup if this operation is not a replication operation
+				// (otherwise, we would send the same operation more than once)
+				if operation.IsReplicationOperation == false {
+					go replication.SendHashmapToNode(n.data, n.L1PrimaryNode, true)
+				}
+			}
 
 			// If it's not a replication operation, then send it to the other nodes (eager replication)
 			if operation.IsReplicationOperation == false {
