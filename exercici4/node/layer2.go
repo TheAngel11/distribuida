@@ -54,9 +54,9 @@ func (n *L2Node) ReadData(key int) (int, bool) {
 	return value, exists
 }
 
-func (n *L2Node) WriteData(key int, value int) {
+func (n *L2Node) WriteData(newMap map[int]int) {
 	n.mutex.Lock() // Lock for writing
-	n.data[key] = value
+	n.data = newMap
 	web_server.TriggerNodeUpdate(n.id, 2, n.data)
 	utils.WriteDataToFile("node/node_persistence/L2"+strconv.Itoa(n.id)+".txt", n.data)
 	n.mutex.Unlock() // Unlock after writing
@@ -83,16 +83,16 @@ func (n *L2Node) handleL2Connection(conn net.Conn) {
 		// Handle operation
 		operation := msg.(transaction.Operation)
 		if operation.WriteKeyValue != nil {
-			n.WriteData(operation.WriteKeyValue[0], operation.WriteKeyValue[1])
-			_ = encoder.Encode(comm.ReceiveMessage{Success: true})
-		} else {
+			// L2 nodes only handle read operations
 			_ = encoder.Encode(comm.ReceiveMessage{Success: false})
+		} else {
+			result, success := n.ReadData(operation.ReadKey)
+			_ = encoder.Encode(comm.ReceiveMessage{Success: success, Value: result})
 		}
 	case replication.ReplicationMessage:
 		// Handle replication message
 		replicationMessage := msg.(replication.ReplicationMessage)
-		n.data = replicationMessage.Data
-		web_server.TriggerNodeUpdate(n.id, 2, n.data)
+		n.WriteData(replicationMessage.Data)
 
 		if replicationMessage.IsFirstReplication {
 			// If this is the first replication, send the data to the other L2 nodes

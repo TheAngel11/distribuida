@@ -57,9 +57,9 @@ func (n *L1Node) ReadData(key int) (int, bool) {
 	return value, exists
 }
 
-func (n *L1Node) WriteData(key int, value int) {
+func (n *L1Node) WriteData(newMap map[int]int) {
 	n.mutex.Lock() // Lock for writing
-	n.data[key] = value
+	n.data = newMap
 	web_server.TriggerNodeUpdate(n.id, 1, n.data)
 	utils.WriteDataToFile("node/node_persistence/L1"+strconv.Itoa(n.id)+".txt", n.data)
 	n.mutex.Unlock() // Unlock after writing
@@ -86,16 +86,16 @@ func (n *L1Node) handleL1Connection(conn net.Conn) {
 		// Handle operation
 		operation := msg.(transaction.Operation)
 		if operation.WriteKeyValue != nil {
-			n.WriteData(operation.WriteKeyValue[0], operation.WriteKeyValue[1])
-			_ = encoder.Encode(comm.ReceiveMessage{Success: true})
-		} else {
+			// L1 nodes only handle read operations
 			_ = encoder.Encode(comm.ReceiveMessage{Success: false})
+		} else {
+			result, success := n.ReadData(operation.ReadKey)
+			_ = encoder.Encode(comm.ReceiveMessage{Success: success, Value: result})
 		}
 	case replication.ReplicationMessage:
 		// Handle replication message
 		replicationMessage := msg.(replication.ReplicationMessage)
-		n.data = replicationMessage.Data
-		web_server.TriggerNodeUpdate(n.id, 1, n.data)
+		n.WriteData(replicationMessage.Data)
 		_ = encoder.Encode(comm.ReceiveMessage{Success: true})
 
 		if replicationMessage.IsFirstReplication {
