@@ -1,9 +1,8 @@
 package web_server
 
 import (
+	"exercici4/utils"
 	"fmt"
-	"sort"
-	"strings"
 	"sync"
 )
 
@@ -40,27 +39,8 @@ func (b *Broadcaster) Broadcast(msg string) {
 // If a node is updated, it must call this function to notify the web server.
 func TriggerNodeUpdate(nodeId, nodeLayer int, currentData map[int]int) {
 	// Build message
-	msg := fmt.Sprintf("%d%d;%s", nodeLayer, nodeId, mapToString(currentData))
+	msg := fmt.Sprintf("%d%d;%s", nodeLayer, nodeId, utils.MapToString(currentData, false))
 
 	// Broadcast message to all subscribers
 	broadcaster.Broadcast(msg)
-}
-
-func mapToString(m map[int]int) string {
-	var keys []int
-	for k := range m {
-		keys = append(keys, k)
-	}
-
-	// Sorting the keys for consistent output
-	sort.Ints(keys)
-
-	// Building the string
-	var sb strings.Builder
-	for _, k := range keys {
-		sb.WriteString(fmt.Sprintf("[Key: %d, Value: %d]", k, m[k]))
-		sb.WriteString("  ")
-	}
-
-	return sb.String()
 }

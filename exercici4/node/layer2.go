@@ -5,9 +5,11 @@ import (
 	"exercici4/comm"
 	"exercici4/replication"
 	"exercici4/transaction"
+	"exercici4/utils"
 	"exercici4/web_server"
 	"log"
 	"net"
+	"strconv"
 	"sync"
 )
 
@@ -56,6 +58,7 @@ func (n *L2Node) WriteData(key int, value int) {
 	n.mutex.Lock() // Lock for writing
 	n.data[key] = value
 	web_server.TriggerNodeUpdate(n.id, 2, n.data)
+	utils.WriteDataToFile("node/node_persistence/L2"+strconv.Itoa(n.id)+".txt", n.data)
 	n.mutex.Unlock() // Unlock after writing
 }
 
